@@ -4,12 +4,18 @@
  */
 package jsf31kochfractalfx;
 
+import Fractal.Edge;
 import calculate.*;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.sql.Timestamp;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -24,6 +30,7 @@ import javafx.scene.input.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import timeutil.TimeStamp;
 
 /**
  *
@@ -114,12 +121,12 @@ public class JSF31KochFractalFX extends Application {
 
         // Button to increase level of Koch fractal
         Button buttonIncreaseLevel = new Button();
-        buttonIncreaseLevel.setText("Increase Level");
+        buttonIncreaseLevel.setText("Start Drawing");
         buttonIncreaseLevel.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 try {
-                    increaseLevelButtonActionPerformed(event);
+                    startDrawingButtonActoinPerformed(event);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -223,9 +230,14 @@ public class JSF31KochFractalFX extends Application {
 
         // Adjust edge for zoom and drag
         Edge e1 = edgeAfterZoomAndDrag(e);
-
+        int r = e.color.getRed();
+        int g = e.color.getGreen();
+        int b = e.color.getBlue();
+        int a = e.color.getAlpha();
+        double opacity = a / 255.0 ;
+        javafx.scene.paint.Color efx = javafx.scene.paint.Color.rgb(r, g, b, opacity);
         // Set line color
-        gc.setStroke(e1.color);
+        gc.setStroke(efx);
 
         // Set line width depending on level
         if (currentLevel <= 3) {
@@ -296,7 +308,31 @@ public class JSF31KochFractalFX extends Application {
             kochManager.changeLevel(currentLevel);
         }
     }
+    private void startDrawingButtonActoinPerformed(ActionEvent event) throws  Exception {
+        TimeStamp ts = new TimeStamp();
+        int way =1;
+        ObjectInputStream ois = null;
+        ts.setBegin();
+        switch(way){
+            case 1:
+                FileInputStream inputStream = new FileInputStream("6.txt");
+                ois = new ObjectInputStream(inputStream);
+                break;
+            case 2:
+                FileInputStream inputStream2 = new FileInputStream("6.bin");
+                InputStream buffer = new BufferedInputStream(inputStream2);
+                ois = new ObjectInputStream(buffer);
+        }
 
+        List<Edge> DrawingEdges = (List<Edge>)ois.readObject();
+        ts.setEnd();
+        System.out.println(ts.toString());
+        clearKochPanel();
+        for (Edge e : DrawingEdges
+             ) {
+            drawEdge(e);
+        }
+    }
     private void decreaseLevelButtonActionPerformed(ActionEvent event) throws Exception {
         if (currentLevel > 1) {
             // resetZoom();
@@ -350,12 +386,19 @@ public class JSF31KochFractalFX extends Application {
     }
 
     private Edge edgeAfterZoomAndDrag(Edge e) {
+        int r = e.color.getRed();
+        int g = e.color.getGreen();
+        int b = e.color.getBlue();
+        int a = e.color.getAlpha();
+        double opacity = a / 255.0 ;
+        javafx.scene.paint.Color efx = javafx.scene.paint.Color.rgb(r, g, b, opacity);
+        // Set line color
         return new Edge(
                 e.X1 * zoom + zoomTranslateX,
                 e.Y1 * zoom + zoomTranslateY,
                 e.X2 * zoom + zoomTranslateX,
                 e.Y2 * zoom + zoomTranslateY,
-                e.color);
+                efx);
     }
 
     /**

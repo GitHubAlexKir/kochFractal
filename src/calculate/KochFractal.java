@@ -5,6 +5,10 @@
 package calculate;
 
 import java.util.Observable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import Fractal.Edge;
 import javafx.scene.paint.Color;
 
 /**
@@ -13,19 +17,30 @@ import javafx.scene.paint.Color;
  */
 public class KochFractal extends Observable {
 
+    private KochManager km;
+
     private int level = 1;      // The current level of the fractal
     private int nrOfEdges = 3;  // The number of edges in the current level of the fractal
-    private float hue;          // Hue value of color for next edge
-    private boolean cancelled;  // Flag to indicate that calculation has been cancelled
+    //private float hue;          // Hue value of color for next edge
+    private AtomicBoolean cancelled = new AtomicBoolean(false);  // Flag to indicate that calculation has been cancelled
 
 
-    private void drawKochEdge(double ax, double ay, double bx, double by, int n) {
-        if (!cancelled) {
+    public KochFractal(KochManager km) {
+        this.km = km;
+    }
+
+
+
+    private void drawKochEdge(double ax, double ay, double bx, double by, int n, float[] hue,char pos,KochManager.updateCallback cb) {
+        if (!cancelled.get()) {
             if (n == 1) {
-                hue = hue + 1.0f / nrOfEdges;
-                Edge e = new Edge(ax, ay, bx, by, Color.hsb(hue*360.0, 1.0, 1.0));
-                this.setChanged();
-                this.notifyObservers(e);
+                hue[0] = hue[0] + 1.0f / nrOfEdges;
+                Edge e = new Edge(ax, ay, bx, by, Color.hsb(hue[0]*360.0, 1.0, 1.0));
+                try {
+                    cb.update(e);
+                } catch (InterruptedException e1) {
+                    //e1.printStackTrace();
+                }
             } else {
                 double angle = Math.PI / 3.0 + Math.atan2(by - ay, bx - ax);
                 double distabdiv3 = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) / 3;
@@ -33,34 +48,37 @@ public class KochFractal extends Observable {
                 double cy = Math.sin(angle) * distabdiv3 + (by - ay) / 3 + ay;
                 final double midabx = (bx - ax) / 3 + ax;
                 final double midaby = (by - ay) / 3 + ay;
-                drawKochEdge(ax, ay, midabx, midaby, n - 1);
-                drawKochEdge(midabx, midaby, cx, cy, n - 1);
-                drawKochEdge(cx, cy, (midabx + bx) / 2, (midaby + by) / 2, n - 1);
-                drawKochEdge((midabx + bx) / 2, (midaby + by) / 2, bx, by, n - 1);
+                drawKochEdge(ax, ay, midabx, midaby, n - 1,hue,pos,cb);
+                drawKochEdge(midabx, midaby, cx, cy, n - 1,hue,pos,cb);
+                drawKochEdge(cx, cy, (midabx + bx) / 2, (midaby + by) / 2, n - 1,hue,pos,cb);
+                drawKochEdge((midabx + bx) / 2, (midaby + by) / 2, bx, by, n - 1,hue,pos,cb);
             }
         }
     }
 
-    public void generateLeftEdge() {
-        hue = 0f;
-        cancelled = false;
-        drawKochEdge(0.5, 0.0, (1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, level);
+    public void generateLeftEdge(CountDownLatch lat, KochManager.updateCallback cb) {
+        float hue = 0f;
+        cancelled.set(false);
+        drawKochEdge(0.5, 0.0, (1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, level, new float[]{hue},'L',cb);
+        lat.countDown();
     }
 
-    public void generateBottomEdge() {
-        hue = 1f / 3f;
-        cancelled = false;
-        drawKochEdge((1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, (1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, level);
+    public void generateBottomEdge(CountDownLatch lat,KochManager.updateCallback cb) {
+        float hue = 1f / 3f;
+        cancelled.set(false);
+        drawKochEdge((1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, (1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, level, new float[]{hue},'B',cb);
+        lat.countDown();
     }
 
-    public void generateRightEdge() {
-        hue = 2f / 3f;
-        cancelled = false;
-        drawKochEdge((1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, 0.5, 0.0, level);
+    public void generateRightEdge(CountDownLatch lat,KochManager.updateCallback cb) {
+        float hue = 2f / 3f;
+        cancelled.set(false);
+        drawKochEdge((1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, 0.5, 0.0, level, new float[]{hue},'R',cb);
+        lat.countDown();
     }
-    
+
     public void cancel() {
-        cancelled = true;
+        cancelled.set(true);
     }
 
     public void setLevel(int lvl) {
