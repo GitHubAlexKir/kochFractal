@@ -38,6 +38,9 @@ import timeutil.TimeStamp;
  */
 public class JSF31KochFractalFX extends Application {
 
+    //sockets
+    private static String host = "localhost";
+    private static int way = 2;
     // Zoom and drag
     private double zoomTranslateX = 0.0;
     private double zoomTranslateY = 0.0;
@@ -200,7 +203,7 @@ public class JSF31KochFractalFX extends Application {
 
         // Create Koch manager and set initial level
         resetZoom();
-        kochManager = new KochManager(this);
+        kochManager = new KochManager(this,host,way);
         kochManager.changeLevel(currentLevel);
 
         // Create the scene and add the grid pane
@@ -406,6 +409,14 @@ public class JSF31KochFractalFX extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        if (args.length != 0) {
+            if (!args[0].isEmpty()) {
+                host = args[0];
+            }
+            if (!args[1].isEmpty()) {
+                way = Integer.parseInt(args[1]);
+            }
+        }
         launch(args);
     }
 }

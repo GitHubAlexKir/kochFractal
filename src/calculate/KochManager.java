@@ -34,11 +34,15 @@ import timeutil.TimeStamp;
 public class KochManager{
     private JSF31KochFractalFX application;
     private int level = 1;
+    private int way;
+    private String host;
     private TimeStamp ts = new TimeStamp();
     private List<Edge> edges = new ArrayList<>();
     private ExecutorService pool;
-    public KochManager(JSF31KochFractalFX application){
+    public KochManager(JSF31KochFractalFX application,String host, int way){
         this.application = application;
+        this.host = host;
+        this.way = way;
         //changeLevel(level);
         pool = Executors.newFixedThreadPool(1);
         changeLevel(level);
@@ -54,14 +58,14 @@ public class KochManager{
 
                 ts.setBegin();
                 try (
-                        Socket socket = new Socket("localhost", 1337);
+                        Socket socket = new Socket(host, 1337);
                         ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
                         ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream())
                 ) {
-                    outStream.writeObject(level);
+                    outStream.writeObject(new Request(level,way));
                     Platform.runLater(()-> application.clearKochPanel());
-                    int receiveWay = 2;
-                    switch (receiveWay){
+
+                    switch (way){
                         case 1:
                             edges = (List<Edge>) inStream.readObject();
                             Platform.runLater(()-> drawEdges());

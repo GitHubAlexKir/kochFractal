@@ -1,6 +1,7 @@
 package server;
 
 import Fractal.Edge;
+import calculate.Request;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -48,9 +49,9 @@ public class Main {
         out = new ObjectOutputStream(incoming.getOutputStream());
 
         System.out.println("Scanning for level");
-        int level = (int)inStream.readObject();
-        System.out.println("Level " + level + " chosen.");
-        calculateFractal(level,2);
+        Request request = (Request) inStream.readObject();
+        System.out.println("Level " + request.getLevel() + " chosen.");
+        calculateFractal(request.getLevel(),request.getWay());
     }
 
     public void calculateFractal(int level, int way) throws IOException, ExecutionException, InterruptedException {
