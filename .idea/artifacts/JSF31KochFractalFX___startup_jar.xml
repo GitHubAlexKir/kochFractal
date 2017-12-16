@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="JSF31KochFractalFX - startup:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/JSF31KochFractalFX___startup_jar</output-path>
+    <root id="archive" name="JSF31KochFractalFX - startup.jar">
+      <element id="module-output" name="JSF31KochFractalFX - startup" />
+    </root>
+  </artifact>
+</component>
