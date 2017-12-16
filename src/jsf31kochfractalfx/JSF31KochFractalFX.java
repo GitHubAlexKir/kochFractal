@@ -71,9 +71,6 @@ public class JSF31KochFractalFX extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        primaryStage.setOnCloseRequest((a)->{
-            System.out.println("Closing...");
-            kochManager.stop();});
 
         // Define grid pane
         GridPane grid;
@@ -218,14 +215,18 @@ public class JSF31KochFractalFX extends Application {
     }
 
     public void drawEdge(Edge e) {
-        // Graphics
         GraphicsContext gc = kochPanel.getGraphicsContext2D();
 
         // Adjust edge for zoom and drag
         Edge e1 = edgeAfterZoomAndDrag(e);
-
+        int r = e.color.getRed();
+        int g = e.color.getGreen();
+        int b = e.color.getBlue();
+        int a = e.color.getAlpha();
+        double opacity = a / 255.0 ;
+        javafx.scene.paint.Color efx = javafx.scene.paint.Color.rgb(r, g, b, opacity);
         // Set line color
-        gc.setStroke(e1.color);
+        gc.setStroke(efx);
 
         // Set line width depending on level
         if (currentLevel <= 3) {
@@ -350,12 +351,19 @@ public class JSF31KochFractalFX extends Application {
     }
 
     private Edge edgeAfterZoomAndDrag(Edge e) {
+        int r = e.color.getRed();
+        int g = e.color.getGreen();
+        int b = e.color.getBlue();
+        int a = e.color.getAlpha();
+        double opacity = a / 255.0 ;
+        javafx.scene.paint.Color efx = javafx.scene.paint.Color.rgb(r, g, b, opacity);
+        // Set line color
         return new Edge(
                 e.X1 * zoom + zoomTranslateX,
                 e.Y1 * zoom + zoomTranslateY,
                 e.X2 * zoom + zoomTranslateX,
                 e.Y2 * zoom + zoomTranslateY,
-                e.color);
+                efx);
     }
 
     /**

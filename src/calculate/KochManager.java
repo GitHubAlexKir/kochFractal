@@ -1,62 +1,102 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package calculate;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.scene.paint.Color;
 import jsf31kochfractalfx.JSF31KochFractalFX;
 import timeutil.TimeStamp;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-public class KochManager {
+/**
+ *
+ * @author rick-
+ */
+public class KochManager{
     private JSF31KochFractalFX application;
-    private KochFractal koch = new KochFractal();
-    private ArrayList<Edge> edges = new ArrayList<Edge>();
-
-    public KochManager(JSF31KochFractalFX application) {
+    private int level = 1;
+    private TimeStamp ts = new TimeStamp();
+    private List<Edge> edges = new ArrayList<>();
+    private ExecutorService pool;
+    public KochManager(JSF31KochFractalFX application){
         this.application = application;
+        //changeLevel(level);
+        pool = Executors.newFixedThreadPool(1);
+        changeLevel(level);
+    }
+    public void changeLevel(int level){
+
+        Task lt = new Task() {
+            @Override
+            protected Object call() throws Exception {
+                int numberEdges = (int) (3 * Math.pow(4, level - 1));
+                Platform.runLater(()-> application.setTextNrEdges(String.valueOf(numberEdges)));
+                TimeStamp ts = new TimeStamp();
+
+                ts.setBegin();
+                try (
+                        Socket socket = new Socket("localhost", 1337);
+                        ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+                        ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream())
+                ) {
+                    outStream.writeObject(level);
+                    Platform.runLater(()-> application.clearKochPanel());
+                    int receiveWay = 1;
+                    switch (receiveWay){
+                        case 1:
+                            edges = (List<Edge>) inStream.readObject();
+                            Platform.runLater(()-> drawEdges());
+                            break;
+                        case  2:
+                            for (int i = 0; i < numberEdges;i++)
+                            {
+                                Edge edge = (Edge)inStream.readObject();
+                                Platform.runLater(()-> application.drawEdge(edge));
+                            }
+                    }
+
+                    ts.setEnd();
+                    Platform.runLater(()->application.setTextDraw(ts.toString()));
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+        pool.execute(lt);
     }
 
-    public void changeLevel(int nxt) throws Exception {
-
-        TimeStamp TS = new TimeStamp();
-        koch.setLevel(nxt);
-        edges.clear();
-        TS.setBegin("Begin calc");
-        ExecutorService pool = Executors.newFixedThreadPool(3);
-        KochCallable callableBot = new KochCallable("bot",koch.getLevel());
-        KochCallable callableLeft = new KochCallable("left",koch.getLevel());
-        KochCallable callableRight = new KochCallable("right",koch.getLevel());
-
-        Future<List<Edge>> futureBot = pool.submit(callableBot);
-        Future<List<Edge>> futureLeft = pool.submit(callableLeft);
-        Future<List<Edge>> futureRight= pool.submit(callableRight);
-
-        addEdges(futureBot.get());
-        addEdges(futureLeft.get());
-        addEdges(futureRight.get());
-
-        TS.setEnd("End calc");
-        application.setTextCalc(TS.toString());
-        drawEdges();
-
-    }
-    public void drawEdges() {
-        TimeStamp TS = new TimeStamp();
+    public void drawEdges(){
         application.clearKochPanel();
-        TS.setBegin("Begin drawing");
-        for (Edge e:edges) {
-            application.drawEdge(e);
-        }
-        TS.setEnd("End drawing");
-        application.setTextDraw(TS.toString());
-        application.setTextNrEdges(Integer.toString(edges.size()));
+        application.setTextCalc(ts.toString());
+        TimeStamp ts2 = new TimeStamp();
+        ts2.setBegin();
+        edges.forEach((e)-> application.drawEdge(e));
+        ts2.setEnd();
+        application.setTextDraw(ts2.toString());
+        application.doneDrawing();
     }
-    public synchronized void addEdges(List<Edge> edges) {
-            this.edges.addAll(edges);
-    }
+
+
 }
