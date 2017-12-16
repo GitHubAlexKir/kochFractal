@@ -1,6 +1,6 @@
 package server;
 
-import calculate.Edge;
+import Fractal.Edge;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -50,15 +50,10 @@ public class Main {
         System.out.println("Scanning for level");
         int level = (int)inStream.readObject();
         System.out.println("Level " + level + " chosen.");
-        calculateFractal(level);
+        calculateFractal(level,2);
     }
 
-    public void calculateFractals() throws IOException, ExecutionException, InterruptedException {
-        for (int i = 1; i < 10; i++)
-            calculateFractal(i);
-    }
-
-    public void calculateFractal(int level) throws IOException, ExecutionException, InterruptedException {
+    public void calculateFractal(int level, int way) throws IOException, ExecutionException, InterruptedException {
 
         TimeStamp time = new TimeStamp();
         time.setBegin();
@@ -73,7 +68,6 @@ public class Main {
         edges.addAll(futureBot.get());
         edges.addAll(futureLeft.get());
         edges.addAll(futureRight.get());
-        int way = 1;
         switch (way) {
             case 1:
                 out.writeObject(edges);
@@ -86,7 +80,6 @@ public class Main {
                 }
                 break;
         }
-        //out.writeObject(edges);
         time.setEnd();
         System.out.println(time.toString());
     }

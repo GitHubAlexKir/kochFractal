@@ -3,7 +3,7 @@ package calculate;/*
  * and open the template in the editor.
  */
 
-import calculate.Edge;
+import Fractal.Edge;
 import javafx.scene.paint.Color;
 
 import java.util.Observable;

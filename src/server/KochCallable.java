@@ -1,6 +1,6 @@
 package server;
 
-import calculate.Edge;
+import Fractal.Edge;
 
 import java.util.ArrayList;
 import java.util.List;

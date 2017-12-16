@@ -296,7 +296,7 @@ public class JSF31KochFractalFX extends Application {
         isDrawing.set(false);
     }
 
-    private void increaseLevelButtonActionPerformed(ActionEvent event) throws Exception {
+    private void startDrawingButtonActoinPerformed(ActionEvent event) throws Exception {
         if (currentLevel < 12) {
             // resetZoom();
             currentLevel++;
@@ -304,7 +304,7 @@ public class JSF31KochFractalFX extends Application {
             kochManager.changeLevel(currentLevel);
         }
     }
-    private void startDrawingButtonActoinPerformed(ActionEvent event) throws  Exception {
+    private void dstartDrawingButtonActoinPerformed(ActionEvent event) throws  Exception {
         TimeStamp ts = new TimeStamp();
         int way =1;
         ObjectInputStream ois = null;
